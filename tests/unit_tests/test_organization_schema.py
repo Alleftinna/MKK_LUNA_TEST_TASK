@@ -1,9 +1,15 @@
 import pytest
 from pydantic import ValidationError
 
-from src.schemas.organization import OrganizationPhoneRead, OrganizationRead, OrganizationSearchByName, OrganizationSearchByRadius, OrganizationSearchByBbox
-from src.schemas.building import BuildingRead
 from src.schemas.activity import ActivityRead
+from src.schemas.building import BuildingRead
+from src.schemas.organization import (
+    OrganizationPhoneRead,
+    OrganizationRead,
+    OrganizationSearchByBbox,
+    OrganizationSearchByName,
+    OrganizationSearchByRadius,
+)
 
 
 def test_organization_phone_read_schema() -> None:

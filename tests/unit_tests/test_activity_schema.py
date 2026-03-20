@@ -12,4 +12,6 @@ def test_activity_read_schema_validates_level() -> None:
     assert valid_payload.level == 1
 
     with pytest.raises(ValidationError):
-        ActivityRead.model_validate({"id": 11, "name": "Invalid", "level": 4, "parent_id": 1})
+        ActivityRead.model_validate(
+            {"id": 11, "name": "Invalid", "level": 4, "parent_id": 1}
+        )

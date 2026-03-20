@@ -1,5 +1,6 @@
 from src.schemas.building import BuildingRead
 
+
 def test_building_read_schema() -> None:
     payload = BuildingRead.model_validate(
         {
