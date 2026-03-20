@@ -1,9 +1,6 @@
 from collections.abc import Sequence
-from typing import Generic, TypeVar
 
 from pydantic import BaseModel, Field
-
-T = TypeVar("T")
 
 
 class PageMeta(BaseModel):
@@ -13,7 +10,7 @@ class PageMeta(BaseModel):
     pages: int = Field(ge=0)
 
 
-class Page(BaseModel, Generic[T]):
+class Page[T](BaseModel):
     items: Sequence[T]
     meta: PageMeta
 

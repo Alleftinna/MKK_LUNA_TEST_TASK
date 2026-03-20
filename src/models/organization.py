@@ -1,8 +1,16 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from sqlalchemy import ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.models.base import Base
-from src.models.base import BaseModel
+from src.models.base import Base, BaseModel
+
+if TYPE_CHECKING:
+    from src.models.activity import Activity
+    from src.models.building import Building
+    from src.models.organization_phone import OrganizationPhone
 
 
 class Organization(BaseModel):
@@ -15,12 +23,12 @@ class Organization(BaseModel):
         index=True,
     )
 
-    building: Mapped["Building"] = relationship(back_populates="organizations")
-    phones: Mapped[list["OrganizationPhone"]] = relationship(
+    building: Mapped[Building] = relationship(back_populates="organizations")
+    phones: Mapped[list[OrganizationPhone]] = relationship(
         back_populates="organization",
         cascade="all, delete-orphan",
     )
-    activities: Mapped[list["Activity"]] = relationship(
+    activities: Mapped[list[Activity]] = relationship(
         secondary="organization_activities",
         back_populates="organizations",
     )

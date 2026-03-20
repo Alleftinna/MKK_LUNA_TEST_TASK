@@ -67,7 +67,7 @@ async def is_db_healthy() -> bool:
         return False
 
 
-async def get_session() -> AsyncGenerator[AsyncSession, None]:
+async def get_session() -> AsyncGenerator[AsyncSession]:
     """Получение сессии базы данных"""
     session = AsyncSessionLocal()
     try:

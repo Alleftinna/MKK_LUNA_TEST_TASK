@@ -1,14 +1,10 @@
-from typing import Generic, TypeVar
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.base import BaseModel
 
-ModelT = TypeVar("ModelT", bound=BaseModel)
 
-
-class BaseRepository(Generic[ModelT]):
+class BaseRepository[ModelT: BaseModel]:
     """Базовый репозиторий для CRUD операций."""
 
     model: type[ModelT]
