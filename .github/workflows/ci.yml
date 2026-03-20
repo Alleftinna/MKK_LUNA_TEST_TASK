@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    env:
+      APP_NAME: app
+      DEBUG: "0"
+      COMPOSE_PROFILES: ci
+      HOST_PORT: "8000"
+      DB_USER: user
+      DB_PASS: password
+      DB_NAME: postgres
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DATABASE_ECHO: "0"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install dependencies
+        run: uv sync --frozen --all-groups
+
+      - name: Ruff
+        run: uv run ruff check src tests
+
+      - name: MyPy
+        run: uv run mypy src tests
+
+      - name: Pytest
+        run: uv run pytest --cov=src --cov-report=term-missing
+
+      - name: Alembic scripts check
+        run: uv run alembic heads
