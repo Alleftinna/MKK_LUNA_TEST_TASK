@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from math import cos, radians
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -11,6 +9,7 @@ from src.models.activity import Activity
 from src.models.building import Building
 from src.models.organization import Organization
 from src.repositories.base import BaseRepository
+from src.utils.geo import build_bounding_box, great_circle_distance_expression
 
 
 class OrganizationRepository(BaseRepository[Organization]):
@@ -133,18 +132,32 @@ class OrganizationRepository(BaseRepository[Organization]):
         limit: int = 100,
         offset: int = 0,
     ) -> list[Organization]:
-        lat_delta = radius_m / 111_320
-        cos_lat = max(0.0001, abs(cos(radians(latitude))))
-        lon_delta = radius_m / (111_320 * cos_lat)
-
-        return await self.search_by_bbox(
-            min_lat=latitude - lat_delta,
-            max_lat=latitude + lat_delta,
-            min_lon=longitude - lon_delta,
-            max_lon=longitude + lon_delta,
-            limit=limit,
-            offset=offset,
+        bounding_box = build_bounding_box(
+            latitude=latitude,
+            longitude=longitude,
+            radius_m=radius_m,
         )
+        distance_expression = great_circle_distance_expression(
+            latitude=latitude,
+            longitude=longitude,
+            latitude_column=Building.latitude,
+            longitude_column=Building.longitude,
+        )
+        query = (
+            select(Organization)
+            .join(Organization.building)
+            .options(*self._relation_load_options())
+            .where(Building.latitude >= bounding_box.min_lat)
+            .where(Building.latitude <= bounding_box.max_lat)
+            .where(Building.longitude >= bounding_box.min_lon)
+            .where(Building.longitude <= bounding_box.max_lon)
+            .where(distance_expression <= radius_m)
+            .order_by(distance_expression.asc(), Organization.id.asc())
+            .limit(limit)
+            .offset(offset)
+        )
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
 
     @handle_db_exceptions
     async def search_by_bbox(

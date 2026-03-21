@@ -38,6 +38,7 @@ async def test_building_repository_list_within_radius(
         [
             Building(address="Center", latitude=55.7558, longitude=37.6176),
             Building(address="Near", latitude=55.7590, longitude=37.6200),
+            Building(address="Corner", latitude=55.7639, longitude=37.6321),
             Building(address="Far", latitude=56.2000, longitude=38.1000),
         ]
     )

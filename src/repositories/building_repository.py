@@ -1,11 +1,10 @@
-from math import cos, radians
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.db_exceptions import handle_db_exceptions
 from src.models.building import Building
 from src.repositories.base import BaseRepository
+from src.utils.geo import build_bounding_box, great_circle_distance_expression
 
 
 class BuildingRepository(BaseRepository[Building]):
@@ -38,13 +37,25 @@ class BuildingRepository(BaseRepository[Building]):
         longitude: float,
         radius_m: float,
     ) -> list[Building]:
-        lat_delta = radius_m / 111_320
-        cos_lat = max(0.0001, abs(cos(radians(latitude))))
-        lon_delta = radius_m / (111_320 * cos_lat)
-
-        return await self.list_within_bbox(
-            min_lat=latitude - lat_delta,
-            max_lat=latitude + lat_delta,
-            min_lon=longitude - lon_delta,
-            max_lon=longitude + lon_delta,
+        bounding_box = build_bounding_box(
+            latitude=latitude,
+            longitude=longitude,
+            radius_m=radius_m,
         )
+        distance_expression = great_circle_distance_expression(
+            latitude=latitude,
+            longitude=longitude,
+            latitude_column=Building.latitude,
+            longitude_column=Building.longitude,
+        )
+        query = (
+            select(Building)
+            .where(Building.latitude >= bounding_box.min_lat)
+            .where(Building.latitude <= bounding_box.max_lat)
+            .where(Building.longitude >= bounding_box.min_lon)
+            .where(Building.longitude <= bounding_box.max_lon)
+            .where(distance_expression <= radius_m)
+            .order_by(distance_expression.asc(), Building.id.asc())
+        )
+        result = await self.session.execute(query)
+        return list(result.scalars().all())

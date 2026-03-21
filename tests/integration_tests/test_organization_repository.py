@@ -92,11 +92,21 @@ async def test_organization_repository_search_by_radius(
 ) -> None:
     repository = OrganizationRepository(async_session)
     await _seed_organization_data(async_session)
+    corner_building = Building(
+        address="Corner",
+        latitude=55.7639,
+        longitude=37.6321,
+    )
+    corner_activity = Activity(name="Corner activity", level=1, parent_id=None)
+    corner_org = Organization(name="Corner Shop", building=corner_building)
+    corner_org.activities.append(corner_activity)
+    async_session.add(corner_org)
+    await async_session.commit()
 
     payload = await repository.search_by_radius(
         latitude=55.7558,
         longitude=37.6176,
-        radius_m=1500,
+        radius_m=1000,
     )
     assert [item.name for item in payload] == ['OOO "Roga i Kopyta"']
 
