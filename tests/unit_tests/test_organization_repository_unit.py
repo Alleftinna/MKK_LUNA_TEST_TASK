@@ -5,7 +5,7 @@ def test_organization_repository_contract() -> None:
 
     for method_name in (
         "get_by_id",
-        "list",
+        "list_organizations",
         "list_by_building",
         "list_by_activity",
         "search_by_name",
