@@ -1,4 +1,6 @@
 import os
+from collections.abc import AsyncIterator
+from typing import Any, cast
 
 import psycopg
 import pytest_asyncio
@@ -38,19 +40,21 @@ def build_test_database_url() -> str:
     return f"postgresql+psycopg://{user}:{password}@{host}:{port}/{DB_NAME_TEST}"
 
 
-def _build_admin_connection_kwargs() -> dict[str, str]:
+def _build_admin_connection_kwargs() -> dict[str, object]:
     host = os.getenv("TEST_DB_HOST", os.getenv("DB_HOST", "127.0.0.1"))
     return {
         "dbname": "postgres",
         "user": os.getenv("TEST_DB_USER", os.getenv("DB_USER", "user")),
         "password": os.getenv("TEST_DB_PASS", os.getenv("DB_PASS", "password")),
         "host": host,
-        "port": os.getenv("TEST_DB_PORT", os.getenv("DB_PORT", "5432")),
+        "port": int(os.getenv("TEST_DB_PORT", os.getenv("DB_PORT", "5432"))),
     }
 
 
 def create_db() -> None:
-    connection = psycopg.connect(**_build_admin_connection_kwargs())
+    connection = psycopg.connect(
+        **cast(dict[str, Any], _build_admin_connection_kwargs())
+    )
     connection.autocommit = True
     try:
         with connection.cursor() as cursor:
@@ -67,7 +71,9 @@ def create_db() -> None:
 
 
 def drop_db() -> None:
-    connection = psycopg.connect(**_build_admin_connection_kwargs())
+    connection = psycopg.connect(
+        **cast(dict[str, Any], _build_admin_connection_kwargs())
+    )
     connection.autocommit = True
     try:
         with connection.cursor() as cursor:
@@ -110,14 +116,14 @@ def truncate_db() -> None:
 
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
-async def setup_test_db() -> None:
+async def setup_test_db() -> AsyncIterator[None]:
     create_db()
     yield
     drop_db()
 
 
 @pytest_asyncio.fixture(scope="function")
-async def async_engine(setup_test_db) -> AsyncEngine:
+async def async_engine(setup_test_db) -> AsyncIterator[AsyncEngine]:
     engine = create_async_engine(
         build_test_database_url(),
         echo=False,
@@ -133,14 +139,16 @@ async def async_engine(setup_test_db) -> AsyncEngine:
 
 
 @pytest_asyncio.fixture
-async def async_session(async_engine: AsyncEngine) -> AsyncSession:
+async def async_session(async_engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
     session_factory = async_sessionmaker(bind=async_engine, expire_on_commit=False)
     async with session_factory() as session:
         yield session
 
 
 @pytest_asyncio.fixture
-async def seeded_directory_data(async_session: AsyncSession) -> dict[str, int]:
+async def seeded_directory_data(
+    async_session: AsyncSession,
+) -> AsyncIterator[dict[str, int]]:
     building_main = Building(
         address="Moscow, Lenina 1", latitude=55.7558, longitude=37.6176
     )
@@ -196,7 +204,7 @@ async def seeded_directory_data(async_session: AsyncSession) -> dict[str, int]:
     )
     await async_session.commit()
 
-    return {
+    yield {
         "building_main_id": building_main.id,
         "activity_food_id": activity_food.id,
         "org_food_id": org_food.id,
@@ -207,7 +215,7 @@ async def seeded_directory_data(async_session: AsyncSession) -> dict[str, int]:
 async def client(
     async_engine: AsyncEngine,
     seeded_directory_data: dict[str, int],
-) -> AsyncClient:
+) -> AsyncIterator[AsyncClient]:
     original_api_key = settings.API_KEY
     settings.API_KEY = "test-api-key"
 

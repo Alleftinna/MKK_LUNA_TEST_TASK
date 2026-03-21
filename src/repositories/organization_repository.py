@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from math import cos, radians
 
 from sqlalchemy import select
@@ -36,7 +38,9 @@ class OrganizationRepository(BaseRepository[Organization]):
         return result.scalar_one_or_none()
 
     @handle_db_exceptions
-    async def list(self, limit: int = 100, offset: int = 0) -> list[Organization]:
+    async def list_organizations(
+        self, limit: int = 100, offset: int = 0
+    ) -> list[Organization]:
         query = (
             select(Organization)
             .options(*self._relation_load_options())
