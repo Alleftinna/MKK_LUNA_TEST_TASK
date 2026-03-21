@@ -65,7 +65,7 @@ async def test_base_repository_list_returns_scalars_as_list() -> None:
     execute_result.scalars.return_value = scalars_result
     session.execute.return_value = execute_result
 
-    payload = await repository.list(limit=10, offset=5)
+    payload = await repository.list_all(limit=10, offset=5)
     assert payload == [first_item, second_item]
     session.execute.assert_awaited_once()
 

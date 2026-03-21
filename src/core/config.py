@@ -1,24 +1,23 @@
-from pydantic import ConfigDict
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = ConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     # Application settings
-    APP_NAME: str
+    APP_NAME: str = "mkk-luna"
     DEBUG: bool = False
     COMPOSE_PROFILES: str = "DEV"
     HOST_PORT: int = 8081
     API_KEY: str = "test-api-key"
 
     # DB settings
-    DB_USER: str
-    DB_PASS: str
-    DB_NAME: str
+    DB_USER: str = "user"
+    DB_PASS: str = "password"
+    DB_NAME: str = "postgres"
     DB_HOST: str = "localhost"
-    DB_PORT: int
-    DATABASE_ECHO: bool
+    DB_PORT: int = 5432
+    DATABASE_ECHO: bool = False
     DATABASE_URL: str | None = None
     SENTRY_DSN: str | None = None
 

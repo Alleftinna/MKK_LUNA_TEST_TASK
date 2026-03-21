@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.organization_phone import OrganizationPhone
@@ -11,8 +13,10 @@ class OrganizationPhoneService:
     async def get_by_id(self, phone_id: int) -> OrganizationPhone | None:
         return await self.repository.get_by_id(phone_id)
 
-    async def list(self, limit: int = 100, offset: int = 0) -> list[OrganizationPhone]:
-        return await self.repository.list(limit=limit, offset=offset)
+    async def list_phones(
+        self, limit: int = 100, offset: int = 0
+    ) -> list[OrganizationPhone]:
+        return await self.repository.list_all(limit=limit, offset=offset)
 
     async def list_by_organization(
         self, organization_id: int

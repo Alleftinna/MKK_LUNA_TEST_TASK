@@ -1,6 +1,9 @@
-# FastAPI Template Project
+# Directory API (FastAPI)
 
-Базовый шаблон для создания веб-приложений на FastAPI с современной архитектурой и лучшими практиками.
+REST API приложения для справочника:
+- организаций
+- зданий
+- деятельностей (с вложенностью до 3 уровней)
 
 ## 🚀 Особенности
 
@@ -13,12 +16,13 @@
 - **uv** - управление зависимостями и lock-файлом
 - **Структурированное логирование**
 - **Конфигурация через переменные окружения**
-- **Готовые шаблоны для масштабируемой архитектуры**
+- **API key авторизация**
+
 
 ## 📁 Структура проекта
 
 ```
-FASTAPI_TEMPLATE-PROJECT/
+MKK_LUNA_TEST_TASK/
 ├── src/
 │   ├── core/           # Основные компоненты
 │   │   ├── config.py   # Конфигурация приложения
@@ -30,14 +34,13 @@ FASTAPI_TEMPLATE-PROJECT/
 │   ├── services/       # Бизнес-логика
 │   ├── routers/        # API роутеры
 │   ├── integrations/   # Внешние интеграции
-│   ├── utils/          # Утилиты
+│   ├── scripts/        # Скрипты (например, seed данных)
 │   └── main.py         # Точка входа
-├── templates/          # HTML шаблоны
 ├── data/              # Данные БД (для Docker)
 ├── logs/              # Логи приложения
 ├── docker-compose.yml # Docker Compose конфигурация
 ├── Dockerfile         # Docker образ
-├── pyproject.toml     # Зависимости и настройки Poetry
+├── pyproject.toml     # Зависимости и настройки uv
 └── env_example        # Пример переменных окружения
 ```
 
@@ -52,8 +55,8 @@ FASTAPI_TEMPLATE-PROJECT/
 ### 1. Клонирование и настройка
 
 ```bash
-git clone <repository-url>
-cd FASTAPI_TEMPLATE-PROJECT
+git clone https://github.com/Alleftinna/MKK_LUNA_TEST_TASK
+cd MKK_LUNA_TEST_TASK
 ```
 
 ### 2. Настройка переменных окружения
@@ -66,10 +69,12 @@ cp env_example .env
 
 ```env
 APP_NAME=your_app_name
+API_KEY=test-api-key
 HOST_PORT=8899
 DB_NAME=postgres
 DB_USER=your_user
-DB_PORT=5435
+DB_HOST=your_db_host
+DB_PORT=5432
 DB_PASS=your_password
 DATABASE_ECHO=1
 DEBUG=1
@@ -94,14 +99,33 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 # Установка зависимостей
 uv sync --all-groups
 
-# Запуск PostgreSQL через Docker
+# Запуск PostgreSQL
 docker-compose up db -d
+
+# Применение миграций (если есть)
+uv run alembic upgrade head
+
+# Заполнение БД тестовыми русскоязычными данными
+uv run python -m src.scripts.seed_data
 
 # Запуск приложения
 uv run uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 5. Проверки качества кода
+### 5. Запуск проекта с Docker (полный цикл)
+
+```bash
+# Поднять приложение + БД
+docker-compose up -d --build
+
+# Применить миграции внутри app-контейнера
+docker-compose exec app uv run alembic upgrade head
+
+# Заполнить БД тестовыми данными
+docker-compose exec app uv run python -m src.scripts.seed_data
+```
+
+### 6. Проверки качества кода
 
 ```bash
 # Линтинг
@@ -125,23 +149,48 @@ uv run pre-commit run --all-files
 - **ReDoc**: `http://localhost:8899/redoc`
 - **OpenAPI JSON**: `http://localhost:8899/openapi.json`
 
+### Авторизация
+
+Для ручек справочника (`/api/v1/*`) требуется заголовок:
+
+```http
+X-API-Key: <API_KEY из .env>
+```
+
 ## 🗄 База данных
 
 ### Миграции
 
 ```bash
 # Создание новой миграции
-alembic revision --autogenerate -m "Description"
+uv run alembic revision --autogenerate -m "Description"
 
 # Применение миграций
-alembic upgrade head
+uv run alembic upgrade head
 
 # Откат миграции
-alembic downgrade -1
+uv run alembic downgrade -1
 
 # Проверка, что Alembic скрипты корректно видят текущие head-ревизии
-alembic heads
+uv run alembic heads
 ```
+
+### Заполнение БД тестовыми данными
+
+Используется скрипт `src/scripts/seed_data.py`.
+
+```bash
+# Очистить текущие данные справочника и заполнить заново
+uv run python -m src.scripts.seed_data
+
+# Заполнить без предварительной очистки
+uv run python -m src.scripts.seed_data --no-reset
+```
+
+Скрипт добавляет:
+- здания с координатами
+- дерево деятельностей (до 3 уровней)
+- организации с телефонами и описаниями телефонов
 
 ### Подключение к БД
 
@@ -158,6 +207,12 @@ psql -h localhost -p 5435 -U your_user -d postgres
 ```bash
 # Запуск тестов
 uv run pytest
+
+# Только unit-тесты
+uv run pytest tests/unit_tests
+
+# Только integration-тесты
+uv run pytest tests/integration_tests
 
 # Запуск с покрытием
 uv run pytest --cov=src
@@ -178,6 +233,17 @@ uv run pytest tests/test_specific.py::test_function
 ## 📝 Логирование
 
 Логи сохраняются в директории `logs/` и настраиваются в `src/core/logger.py`.
+
+## 🔧 Основные ручки API
+
+- `GET /api/v1/buildings`
+- `GET /api/v1/organizations/{organization_id}`
+- `GET /api/v1/organizations/by-building/{building_id}`
+- `GET /api/v1/organizations/by-activity/{activity_id}`
+- `GET /api/v1/organizations/search/by-activity/{activity_id}` (с учетом вложенных деятельностей)
+- `GET /api/v1/organizations/search?name=...`
+- `GET /api/v1/organizations/geo/radius?latitude=...&longitude=...&radius_m=...`
+- `GET /api/v1/organizations/geo/bbox?min_lat=...&max_lat=...&min_lon=...&max_lon=...`
 
 ## 🔧 Разработка
 

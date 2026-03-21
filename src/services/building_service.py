@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.building import Building
@@ -11,8 +13,8 @@ class BuildingService:
     async def get_by_id(self, building_id: int) -> Building | None:
         return await self.repository.get_by_id(building_id)
 
-    async def list(self, limit: int = 100, offset: int = 0) -> list[Building]:
-        return await self.repository.list(limit=limit, offset=offset)
+    async def list_buildings(self, limit: int = 100, offset: int = 0) -> list[Building]:
+        return await self.repository.list_all(limit=limit, offset=offset)
 
     async def list_within_bbox(
         self,

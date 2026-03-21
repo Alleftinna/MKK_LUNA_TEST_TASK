@@ -29,7 +29,7 @@ async def list_buildings(
     offset: int = Query(default=0, ge=0),
 ) -> list[BuildingRead]:
     service = BuildingService(session=session)
-    payload = await service.list(limit=limit, offset=offset)
+    payload = await service.list_buildings(limit=limit, offset=offset)
     return [BuildingRead.model_validate(item) for item in payload]
 
 

@@ -20,7 +20,7 @@ class BaseRepository[ModelT: BaseModel]:
         return result.scalar_one_or_none()
 
     @handle_db_exceptions
-    async def list(self, limit: int = 100, offset: int = 0) -> list[ModelT]:
+    async def list_all(self, limit: int = 100, offset: int = 0) -> list[ModelT]:
         stmt = select(self.model).limit(limit).offset(offset)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

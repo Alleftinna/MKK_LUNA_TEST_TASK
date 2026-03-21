@@ -19,7 +19,7 @@ def build_settings(**overrides: Any) -> Settings:
         "SENTRY_DSN": None,
     }
     base_data.update(overrides)
-    return Settings(**base_data)
+    return Settings(**base_data)  # type: ignore[arg-type]
 
 
 def test_builds_async_database_url_from_parts() -> None:
