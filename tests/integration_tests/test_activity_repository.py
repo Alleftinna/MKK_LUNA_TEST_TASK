@@ -22,11 +22,18 @@ async def test_activity_repository_list_tree(async_session: AsyncSession) -> Non
     await async_session.commit()
 
     activities = await repository.list_tree()
-    assert [item.name for item in activities] == ["Cars", "Food", "Milk products", "Truck"]
+    assert [item.name for item in activities] == [
+        "Cars",
+        "Food",
+        "Milk products",
+        "Truck",
+    ]
 
 
 @pytest.mark.asyncio
-async def test_activity_repository_get_descendant_ids(async_session: AsyncSession) -> None:
+async def test_activity_repository_get_descendant_ids(
+    async_session: AsyncSession,
+) -> None:
     repository = ActivityRepository(async_session)
     root = Activity(name="Food", level=1, parent_id=None)
     async_session.add(root)

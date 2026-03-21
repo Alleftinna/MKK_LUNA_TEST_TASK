@@ -15,7 +15,9 @@ def _looks_like_async_session(candidate: Any) -> bool:
     return callable(rollback)
 
 
-def _extract_session(args: tuple[Any, ...], kwargs: dict[str, Any]) -> AsyncSession | Any | None:
+def _extract_session(
+    args: tuple[Any, ...], kwargs: dict[str, Any]
+) -> AsyncSession | Any | None:
     session_from_kwargs = kwargs.get("session")
     if _looks_like_async_session(session_from_kwargs):
         return session_from_kwargs
@@ -44,7 +46,9 @@ def _error_detail(default_detail: str, error: Exception) -> str:
     return default_detail
 
 
-def handle_db_exceptions(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
+def handle_db_exceptions(
+    func: Callable[..., Awaitable[Any]],
+) -> Callable[..., Awaitable[Any]]:
     """Декоратор для обработки и нормализации ошибок при работе с БД."""
 
     @wraps(func)

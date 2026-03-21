@@ -7,6 +7,7 @@ from src.core.database import close_db, init_db
 from src.core.logger import logger, shutdown_logging
 from src.core.scheduler import set_jobs, stop_scheduler
 from src.integrations import setup_sentry
+from src.routers.directory import directory_router
 from src.routers.system import set_app_instance, system_router
 
 
@@ -42,5 +43,6 @@ app = FastAPI(
 )
 
 app.include_router(system_router)
+app.include_router(directory_router)
 
 set_app_instance(app)

@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     COMPOSE_PROFILES: str = "DEV"
     HOST_PORT: int = 8081
+    API_KEY: str = "test-api-key"
 
     # DB settings
     DB_USER: str

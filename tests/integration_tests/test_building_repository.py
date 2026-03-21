@@ -6,7 +6,9 @@ from src.repositories.building_repository import BuildingRepository
 
 
 @pytest.mark.asyncio
-async def test_building_repository_list_within_bbox(async_session: AsyncSession) -> None:
+async def test_building_repository_list_within_bbox(
+    async_session: AsyncSession,
+) -> None:
     repository = BuildingRepository(async_session)
     async_session.add_all(
         [
@@ -28,7 +30,9 @@ async def test_building_repository_list_within_bbox(async_session: AsyncSession)
 
 
 @pytest.mark.asyncio
-async def test_building_repository_list_within_radius(async_session: AsyncSession) -> None:
+async def test_building_repository_list_within_radius(
+    async_session: AsyncSession,
+) -> None:
     repository = BuildingRepository(async_session)
     async_session.add_all(
         [
