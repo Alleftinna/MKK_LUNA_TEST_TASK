@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from src.core.db_exceptions import handle_db_exceptions
 from src.models.activity import Activity
 from src.models.building import Building
 from src.models.organization import Organization
@@ -24,6 +25,7 @@ class OrganizationRepository(BaseRepository[Organization]):
             selectinload(Organization.activities),
         )
 
+    @handle_db_exceptions
     async def get_by_id(self, entity_id: int) -> Organization | None:
         query = (
             select(Organization)
@@ -33,6 +35,7 @@ class OrganizationRepository(BaseRepository[Organization]):
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
+    @handle_db_exceptions
     async def list(self, limit: int = 100, offset: int = 0) -> list[Organization]:
         query = (
             select(Organization)
@@ -43,6 +46,7 @@ class OrganizationRepository(BaseRepository[Organization]):
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
+    @handle_db_exceptions
     async def list_by_building(
         self,
         building_id: int,
@@ -59,6 +63,7 @@ class OrganizationRepository(BaseRepository[Organization]):
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
+    @handle_db_exceptions
     async def list_by_activity(
         self,
         activity_id: int,
@@ -76,6 +81,7 @@ class OrganizationRepository(BaseRepository[Organization]):
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
+    @handle_db_exceptions
     async def list_by_activities(
         self,
         activity_ids: list[int],
@@ -97,6 +103,7 @@ class OrganizationRepository(BaseRepository[Organization]):
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
+    @handle_db_exceptions
     async def search_by_name(
         self,
         name: str,
@@ -113,6 +120,7 @@ class OrganizationRepository(BaseRepository[Organization]):
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
+    @handle_db_exceptions
     async def search_by_radius(
         self,
         latitude: float,
@@ -134,6 +142,7 @@ class OrganizationRepository(BaseRepository[Organization]):
             offset=offset,
         )
 
+    @handle_db_exceptions
     async def search_by_bbox(
         self,
         min_lat: float,

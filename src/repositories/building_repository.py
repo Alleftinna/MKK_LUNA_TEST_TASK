@@ -3,6 +3,7 @@ from math import cos, radians
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.db_exceptions import handle_db_exceptions
 from src.models.building import Building
 from src.repositories.base import BaseRepository
 
@@ -13,6 +14,7 @@ class BuildingRepository(BaseRepository[Building]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(session=session)
 
+    @handle_db_exceptions
     async def list_within_bbox(
         self,
         min_lat: float,
@@ -29,6 +31,7 @@ class BuildingRepository(BaseRepository[Building]):
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
+    @handle_db_exceptions
     async def list_within_radius(
         self,
         latitude: float,

@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.db_exceptions import handle_db_exceptions
 from src.models.organization_phone import OrganizationPhone
 from src.repositories.base import BaseRepository
 
@@ -11,6 +12,7 @@ class OrganizationPhoneRepository(BaseRepository[OrganizationPhone]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(session=session)
 
+    @handle_db_exceptions
     async def list_by_organization(
         self, organization_id: int
     ) -> list[OrganizationPhone]:

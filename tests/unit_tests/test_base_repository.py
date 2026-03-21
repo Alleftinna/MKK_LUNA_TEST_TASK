@@ -10,9 +10,18 @@ class BuildingRepositoryForTest(BaseRepository[Building]):
     model = Building
 
 
+def build_session_double() -> Mock:
+    session = Mock()
+    session.execute = AsyncMock()
+    session.flush = AsyncMock()
+    session.refresh = AsyncMock()
+    session.rollback = AsyncMock()
+    return session
+
+
 @pytest.mark.asyncio
 async def test_base_repository_get_by_id_returns_scalar_result() -> None:
-    session = AsyncMock()
+    session = build_session_double()
     repository = BuildingRepositoryForTest(session=session)
 
     model_payload = Building(
@@ -33,7 +42,7 @@ async def test_base_repository_get_by_id_returns_scalar_result() -> None:
 
 @pytest.mark.asyncio
 async def test_base_repository_list_returns_scalars_as_list() -> None:
-    session = AsyncMock()
+    session = build_session_double()
     repository = BuildingRepositoryForTest(session=session)
 
     first_item = Building(
@@ -63,7 +72,7 @@ async def test_base_repository_list_returns_scalars_as_list() -> None:
 
 @pytest.mark.asyncio
 async def test_base_repository_add_calls_flush_and_refresh() -> None:
-    session = AsyncMock()
+    session = build_session_double()
     repository = BuildingRepositoryForTest(session=session)
 
     instance = Building(

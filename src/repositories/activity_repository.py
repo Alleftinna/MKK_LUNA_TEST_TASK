@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.db_exceptions import handle_db_exceptions
 from src.models.activity import Activity
 from src.repositories.base import BaseRepository
 
@@ -11,11 +12,13 @@ class ActivityRepository(BaseRepository[Activity]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(session=session)
 
+    @handle_db_exceptions
     async def list_tree(self) -> list[Activity]:
         query = select(Activity).order_by(Activity.level.asc(), Activity.name.asc())
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
+    @handle_db_exceptions
     async def get_descendant_ids(
         self, activity_id: int, max_depth: int = 3
     ) -> list[int]:
