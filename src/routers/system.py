@@ -9,19 +9,25 @@ from fastapi.openapi.docs import (
 
 from src.core.config import settings
 from src.core.database import is_db_healthy
-from src.core.templates import templates
+from src.core.templates import Jinja2Templates
 
 # Создаем роутер для системных эндпоинтов
 system_router = APIRouter()
 
 
+jinja_templates = Jinja2Templates(directory="src/templates")
+
+
 @system_router.get("/", include_in_schema=False)
 async def root(request: Request):
     """Главная страница"""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return jinja_templates.TemplateResponse(
+        "index.html",
+        {"request": request, "settings": settings},
+    )
 
 
-@system_router.get("/docs", include_in_schema=False)
+@system_router.get("/docs#", include_in_schema=False)
 async def get_documentation():
     """
     Кастомная страница Swagger UI с правильной настройкой OAuth2 Authorization Code Flow + PKCE
