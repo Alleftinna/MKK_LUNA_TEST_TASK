@@ -1,0 +1,194 @@
+{% extends "admin/base.html" %}
+{% block title %}Базовые сущности{% endblock %}
+{% block content %}
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">Базовые сущности</h1>
+      <p class="text-gray-600 mt-2">Шаблонный CRUD-интерфейс для сущности `TemplateEntity`.</p>
+    </div>
+    <button id="btn_entity_create" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700">Создать сущность</button>
+  </div>
+
+  <div class="glass rounded-2xl p-4 mb-4" style="box-shadow: var(--shadow-xl);">
+    <label for="api_key" class="text-xs text-gray-600 block mb-1">API Key (для вызова CRUD API)</label>
+    <input id="api_key" type="text" placeholder="Введите X-API-Key" class="w-full md:w-96 px-3 py-2 border rounded-lg" />
+  </div>
+
+  <div class="glass rounded-2xl p-6" style="box-shadow: var(--shadow-xl);">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="text-gray-600">
+          <tr>
+            <th class="text-left py-2 px-2">ID</th>
+            <th class="text-left py-2 px-2">Name</th>
+            <th class="text-left py-2 px-2">Description</th>
+            <th class="text-left py-2 px-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="entity_rows">
+          {% for entity in entities %}
+            <tr class="border-t border-gray-200" data-id="{{ entity.id }}">
+              <td class="py-2 px-2 text-gray-600">{{ entity.id }}</td>
+              <td class="py-2 px-2 font-medium text-gray-900">{{ entity.name }}</td>
+              <td class="py-2 px-2 text-gray-600">{{ entity.description or "—" }}</td>
+              <td class="py-2 px-2">
+                <button class="btn_entity_delete px-3 py-1 rounded-lg border hover:bg-red-50 text-xs text-red-600" data-id="{{ entity.id }}">
+                  Удалить
+                </button>
+              </td>
+            </tr>
+          {% else %}
+            <tr id="empty_row"><td colspan="4" class="py-6 text-center text-gray-500 text-sm">Сущности пока не созданы</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="entity_modal" class="fixed inset-0 hidden items-center justify-center" style="background: rgba(0,0,0,.4);">
+    <div class="glass rounded-2xl p-6 w-full max-w-xl" style="box-shadow: var(--shadow-xl);">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">Создать TemplateEntity</h3>
+        <button id="entity_modal_close" class="px-2 py-1 rounded-lg hover:bg-gray-100">✕</button>
+      </div>
+
+      <form id="entity_form" class="space-y-3">
+        <div>
+          <div class="text-xs text-gray-600 mb-1">Name</div>
+          <input id="f_name" class="w-full px-3 py-2 border rounded-lg" required />
+        </div>
+        <div>
+          <div class="text-xs text-gray-600 mb-1">Description</div>
+          <textarea id="f_description" class="w-full px-3 py-2 border rounded-lg" rows="3"></textarea>
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" id="entity_modal_cancel" class="px-4 py-2 rounded-lg border hover:bg-gray-50">Отмена</button>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const modal = document.getElementById('entity_modal');
+  const rowsContainer = document.getElementById('entity_rows');
+
+  function getApiKey() {
+    const key = document.getElementById('api_key')?.value?.trim();
+    if (!key) {
+      alert('Введите API Key для CRUD операций');
+      return null;
+    }
+    return key;
+  }
+
+  function closeModal() {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+
+  function openModal() {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  document.getElementById('btn_entity_create')?.addEventListener('click', openModal);
+  document.getElementById('entity_modal_close')?.addEventListener('click', closeModal);
+  document.getElementById('entity_modal_cancel')?.addEventListener('click', closeModal);
+
+  function appendRow(entity) {
+    document.getElementById('empty_row')?.remove();
+    const row = document.createElement('tr');
+    row.className = 'border-t border-gray-200';
+    row.setAttribute('data-id', String(entity.id));
+    row.innerHTML = `
+      <td class="py-2 px-2 text-gray-600">${entity.id}</td>
+      <td class="py-2 px-2 font-medium text-gray-900">${entity.name}</td>
+      <td class="py-2 px-2 text-gray-600">${entity.description || '—'}</td>
+      <td class="py-2 px-2">
+        <button class="btn_entity_delete px-3 py-1 rounded-lg border hover:bg-red-50 text-xs text-red-600" data-id="${entity.id}">
+          Удалить
+        </button>
+      </td>
+    `;
+    rowsContainer.appendChild(row);
+    bindDeleteButtons();
+  }
+
+  async function deleteEntity(entityId) {
+    const key = getApiKey();
+    if (!key) return;
+    const response = await fetch(`/api/v1/template-entities/${entityId}`, {
+      method: 'DELETE',
+      headers: { 'X-API-Key': key },
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text || 'Delete failed');
+    }
+  }
+
+  function bindDeleteButtons() {
+    document.querySelectorAll('.btn_entity_delete').forEach((button) => {
+      if (button.dataset.bound === '1') return;
+      button.dataset.bound = '1';
+      button.addEventListener('click', async () => {
+        const entityId = button.getAttribute('data-id');
+        if (!entityId) return;
+        if (!confirm(`Удалить сущность #${entityId}?`)) return;
+        try {
+          await deleteEntity(entityId);
+          const row = rowsContainer.querySelector(`tr[data-id="${entityId}"]`);
+          row?.remove();
+          if (!rowsContainer.querySelector('tr[data-id]')) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.id = 'empty_row';
+            emptyRow.innerHTML = '<td colspan="4" class="py-6 text-center text-gray-500 text-sm">Сущности пока не созданы</td>';
+            rowsContainer.appendChild(emptyRow);
+          }
+        } catch (error) {
+          alert('Ошибка удаления: ' + (error?.message || 'unknown error'));
+        }
+      });
+    });
+  }
+
+  bindDeleteButtons();
+
+  document.getElementById('entity_form')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const key = getApiKey();
+    if (!key) return;
+
+    const name = document.getElementById('f_name')?.value?.trim();
+    const description = document.getElementById('f_description')?.value ?? '';
+    if (!name) {
+      alert('Name обязателен');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/v1/template-entities', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': key,
+        },
+        body: JSON.stringify({ name, description }),
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || 'Create failed');
+      }
+      const created = await response.json();
+      appendRow(created);
+      document.getElementById('entity_form').reset();
+      closeModal();
+    } catch (error) {
+      alert('Ошибка создания: ' + (error?.message || 'unknown error'));
+    }
+  });
+</script>
+{% endblock %}

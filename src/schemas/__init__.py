@@ -1,19 +1,6 @@
-from src.schemas.activity import ActivityRead
-from src.schemas.building import BuildingRead
-from src.schemas.organization import (
-    OrganizationRead,
-    OrganizationSearchByBbox,
-    OrganizationSearchByName,
-    OrganizationSearchByRadius,
-)
-from src.schemas.organization_phone import OrganizationPhoneRead
+from src.schemas.template_entity import TemplateEntityCreate, TemplateEntityRead
 
 __all__ = (
-    "BuildingRead",
-    "ActivityRead",
-    "OrganizationPhoneRead",
-    "OrganizationRead",
-    "OrganizationSearchByName",
-    "OrganizationSearchByRadius",
-    "OrganizationSearchByBbox",
+    "TemplateEntityCreate",
+    "TemplateEntityRead",
 )
