@@ -1,8 +1,15 @@
+from src.models.activity import Activity
 from src.models.base import Base, BaseModel
-from src.models.template_entity import TemplateEntity
+from src.models.building import Building
+from src.models.organization import Organization, OrganizationActivity
+from src.models.organization_phone import OrganizationPhone
 
 __all__ = (
     "Base",
     "BaseModel",
-    "TemplateEntity",
+    "Building",
+    "Activity",
+    "Organization",
+    "OrganizationActivity",
+    "OrganizationPhone",
 )

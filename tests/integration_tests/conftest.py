@@ -18,10 +18,12 @@ from sqlalchemy.ext.asyncio import (
 from src.core.config import settings
 from src.core.database import get_session
 from src.models import Base
-from src.models.template_entity import TemplateEntity
-from src.routers.admin import admin_router
+from src.models.activity import Activity
+from src.models.building import Building
+from src.models.organization import Organization
+from src.models.organization_phone import OrganizationPhone
+from src.routers.directory import directory_router
 from src.routers.system import set_app_instance, system_router
-from src.routers.template import template_router
 
 DB_NAME_TEST = os.getenv("TEST_DB_NAME", "test_db")
 
@@ -144,31 +146,75 @@ async def async_session(async_engine: AsyncEngine) -> AsyncIterator[AsyncSession
 
 
 @pytest_asyncio.fixture
-async def seeded_template_data(
+async def seeded_directory_data(
     async_session: AsyncSession,
 ) -> AsyncIterator[dict[str, int]]:
-    first_entity = TemplateEntity(
-        name="entity-one",
-        description="primary fixture entity",
+    building_main = Building(
+        address="Moscow, Lenina 1", latitude=55.7558, longitude=37.6176
     )
-    second_entity = TemplateEntity(
-        name="entity-two",
-        description="secondary fixture entity",
+    building_far = Building(
+        address="Moscow, Blukhera 32/1", latitude=56.3000, longitude=38.4000
     )
 
-    async_session.add_all([first_entity, second_entity])
+    activity_food = Activity(name="Food", level=1, parent_id=None)
+    activity_meat = Activity(name="Meat products", level=2, parent=activity_food)
+    activity_milk = Activity(name="Milk products", level=2, parent=activity_food)
+    activity_cars = Activity(name="Cars", level=1, parent_id=None)
+
+    org_food = Organization(
+        name='OOO "Roga i Kopyta"',
+        building=building_main,
+        activities=[activity_food, activity_meat],
+        phones=[
+            OrganizationPhone(
+                phone="2-222-222",
+                phone_description="Reception",
+            )
+        ],
+    )
+    org_auto = Organization(
+        name="AutoShop",
+        building=building_main,
+        activities=[activity_cars],
+        phones=[
+            OrganizationPhone(
+                phone="3-333-333",
+                phone_description="Sales",
+            )
+        ],
+    )
+    org_milk = Organization(
+        name="Milk Factory",
+        building=building_far,
+        activities=[activity_milk],
+    )
+
+    async_session.add_all(
+        [
+            building_main,
+            building_far,
+            activity_food,
+            activity_meat,
+            activity_milk,
+            activity_cars,
+            org_food,
+            org_auto,
+            org_milk,
+        ]
+    )
     await async_session.commit()
 
     yield {
-        "first_entity_id": first_entity.id,
-        "second_entity_id": second_entity.id,
+        "building_main_id": building_main.id,
+        "activity_food_id": activity_food.id,
+        "org_food_id": org_food.id,
     }
 
 
 @pytest_asyncio.fixture
 async def client(
     async_engine: AsyncEngine,
-    seeded_template_data: dict[str, int],
+    seeded_directory_data: dict[str, int],
 ) -> AsyncIterator[AsyncClient]:
     original_api_key = settings.API_KEY
     settings.API_KEY = "test-api-key"
@@ -181,8 +227,7 @@ async def client(
 
     test_app = FastAPI()
     test_app.include_router(system_router)
-    test_app.include_router(template_router)
-    test_app.include_router(admin_router)
+    test_app.include_router(directory_router)
     set_app_instance(test_app)
     test_app.dependency_overrides[get_session] = override_get_session
 

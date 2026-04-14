@@ -31,12 +31,3 @@ class BaseRepository[ModelT: BaseModel]:
         await self.session.flush()
         await self.session.refresh(instance)
         return instance
-
-    @handle_db_exceptions
-    async def delete_by_id(self, entity_id: int) -> bool:
-        instance = await self.get_by_id(entity_id=entity_id)
-        if instance is None:
-            return False
-        await self.session.delete(instance)
-        await self.session.flush()
-        return True

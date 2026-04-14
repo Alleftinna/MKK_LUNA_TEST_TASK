@@ -2,12 +2,12 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from src.models.template_entity import TemplateEntity
+from src.models.building import Building
 from src.repositories.base import BaseRepository
 
 
-class TemplateEntityRepositoryForTest(BaseRepository[TemplateEntity]):
-    model = TemplateEntity
+class BuildingRepositoryForTest(BaseRepository[Building]):
+    model = Building
 
 
 def build_session_double() -> Mock:
@@ -15,7 +15,6 @@ def build_session_double() -> Mock:
     session.execute = AsyncMock()
     session.flush = AsyncMock()
     session.refresh = AsyncMock()
-    session.delete = AsyncMock()
     session.rollback = AsyncMock()
     return session
 
@@ -23,12 +22,13 @@ def build_session_double() -> Mock:
 @pytest.mark.asyncio
 async def test_base_repository_get_by_id_returns_scalar_result() -> None:
     session = build_session_double()
-    repository = TemplateEntityRepositoryForTest(session=session)
+    repository = BuildingRepositoryForTest(session=session)
 
-    model_payload = TemplateEntity(
+    model_payload = Building(
         id=1,
-        name="alpha",
-        description="first entity",
+        address="Moscow, Lenina 1",
+        latitude=55.7558,
+        longitude=37.6176,
     )
 
     scalar_result = Mock()
@@ -43,17 +43,19 @@ async def test_base_repository_get_by_id_returns_scalar_result() -> None:
 @pytest.mark.asyncio
 async def test_base_repository_list_returns_scalars_as_list() -> None:
     session = build_session_double()
-    repository = TemplateEntityRepositoryForTest(session=session)
+    repository = BuildingRepositoryForTest(session=session)
 
-    first_item = TemplateEntity(
+    first_item = Building(
         id=1,
-        name="alpha",
-        description="first entity",
+        address="Moscow, Lenina 1",
+        latitude=55.7558,
+        longitude=37.6176,
     )
-    second_item = TemplateEntity(
+    second_item = Building(
         id=2,
-        name="beta",
-        description="second entity",
+        address="Moscow, Lenina 2",
+        latitude=55.7658,
+        longitude=37.6276,
     )
 
     scalars_result = Mock()
@@ -71,12 +73,13 @@ async def test_base_repository_list_returns_scalars_as_list() -> None:
 @pytest.mark.asyncio
 async def test_base_repository_add_calls_flush_and_refresh() -> None:
     session = build_session_double()
-    repository = TemplateEntityRepositoryForTest(session=session)
+    repository = BuildingRepositoryForTest(session=session)
 
-    instance = TemplateEntity(
+    instance = Building(
         id=1,
-        name="alpha",
-        description="first entity",
+        address="Moscow, Lenina 1",
+        latitude=55.7558,
+        longitude=37.6176,
     )
     payload = await repository.add(instance)
     assert payload is instance
@@ -84,20 +87,3 @@ async def test_base_repository_add_calls_flush_and_refresh() -> None:
     session.add.assert_called_once_with(instance)
     session.flush.assert_awaited_once()
     session.refresh.assert_awaited_once_with(instance)
-
-
-@pytest.mark.asyncio
-async def test_base_repository_delete_by_id_deletes_existing_entity() -> None:
-    session = build_session_double()
-    repository = TemplateEntityRepositoryForTest(session=session)
-
-    instance = TemplateEntity(id=1, name="alpha", description="first entity")
-
-    scalar_result = Mock()
-    scalar_result.scalar_one_or_none.return_value = instance
-    session.execute.return_value = scalar_result
-
-    payload = await repository.delete_by_id(entity_id=1)
-    assert payload is True
-    session.delete.assert_awaited_once_with(instance)
-    session.flush.assert_awaited_once()
